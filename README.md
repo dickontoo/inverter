@@ -42,13 +42,14 @@ There's no Makefile.
 Usage
 -----
 
-```./a.out```
+```$ ./a.out```
+
 
 (More usefully:
 
-```nc -l -u -p 10006 | a.out```
+```$ nc -l -u -p 10006 | a.out```
 
-as it reads from stdin).
+as it reads from stdin.)
 
 
 As shipped, SolaX dataloggers' wifi interfaces start an access point, named
@@ -73,6 +74,7 @@ Over the coming days I'll add a Perl script to log.  For now, enjoy.
 
 Output is something like this:
 
+```
 newdesktop:/home/dickon/src/inverter/ (0) 126 $ ./a.out < /tmp/pkt 
 Datalogger serial: 61xxxxx50
 Inverter serial: S362xxxxxxx035
@@ -94,7 +96,7 @@ Today's total:    4.20 kWh
 Total:            6.0 kWh
 
 newdesktop:/home/dickon/src/inverter/ (0) 127 $ 
-
+```
 
 Internals
 ---------
@@ -112,6 +114,7 @@ the data seems to be unaligned 16b big-endian pairs.
 Looking at a packet from my system, and correlating it with the data on
 Solarman, lead me to the following:
 
+```
 0x04->0x07             -- Datalogger's serial number backwards.
 0x08->0x0b             -- ditto (?)
 0x11->0x25             -- Inverter's S/N
@@ -136,7 +139,7 @@ Solarman, lead me to the following:
 0x45<<8 | 0x46 == 420  -- Today's total, ckWh ?
 
 0x49<<8 | 0x4a == 60   -- Total power output, dWh?
-
+```
 
 
 
