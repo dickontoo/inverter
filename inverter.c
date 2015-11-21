@@ -10,6 +10,7 @@
 #include <unistd.h>
 #include "inverter.h"
 #include <string.h>
+#include <time.h>
 
 int main(int argc, char *argv[])
 {
@@ -17,6 +18,9 @@ int main(int argc, char *argv[])
 	char	invserial[16];
 	int	l;
 	struct inverter i;
+	struct tm *tm;
+	char	atime[32];
+	time_t	now;
 
 	i.invserial = NULL;
 
@@ -26,6 +30,10 @@ int main(int argc, char *argv[])
 			break;
 		if (l != 103)
 			continue;
+
+		now = time(NULL);
+		tm = gmtime(&now);
+		strftime(atime, sizeof(atime), "%Y%m%dT%H%M%SZ", tm);
 
 		memcpy(invserial, &b[0x11], 0x0e);
 		invserial[0x0e] = '\0';
@@ -53,7 +61,8 @@ int main(int argc, char *argv[])
 		i.ttot = b[0x45]<<8 | b[0x46];
 		i.tot  = b[0x49]<<8 | b[0x4a];
 
-		printf("Datalogger serial: %u\n"
+		printf("Time:\t\t%s\n"
+			"Datalogger serial: %u\n"
 			"Inverter serial: %s\n"
 			"Temperature:\t%5.01f degrees Celsius\n"
 			"PV1 voltage:\t%5.01f V\n"
@@ -62,6 +71,9 @@ int main(int argc, char *argv[])
 			"PV1 current:\t%5.01f A\n"
 			"PV2 current:\t%5.01f A\n"
 			"PV3 current:\t%5.01f A\n"
+			"P1 current:\t%5.01f A\n"
+			"P2 current:\t%5.01f A\n"
+			"P3 current:\t%5.01f A\n"
 			"P1 voltage:\t%5.01f V\n"
 			"P2 voltage:\t%5.01f V\n"
 			"P3 voltage:\t%5.01f V\n"
@@ -72,6 +84,7 @@ int main(int argc, char *argv[])
 			"Today's total:\t%6.02f kWh\n"
 			"Total:\t\t%5.01f kWh\n"
 			"\n",
+			atime,
 			i.dlserial,
 			i.invserial,
 			((float) i.temp)/10,
@@ -81,6 +94,9 @@ int main(int argc, char *argv[])
 			((float) i.pv1i)/10,
 			((float) i.pv2i)/10,
 			((float) i.pv3i)/10,
+			((float) i.p1i)/10,
+			((float) i.p2i)/10,
+			((float) i.p3i)/10,
 			((float) i.p1v)/10,
 			((float) i.p2v)/10,
 			((float) i.p3v)/10,
