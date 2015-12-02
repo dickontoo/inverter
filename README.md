@@ -22,32 +22,34 @@ configurability.
 
 Don't expect to get anything out of it at night: the inverter is
 solar-powered, and takes nothing out of the grid.  When it gets dark and the
-panels are unable to power the thing, it simply shuts down.
+panels are unable to power the thing, it simply shuts down, hard.
 
 The docs say it reports every 30 seconds.  This is a lie.  It's every 300s
-or so.  There is a 'server' mode (rather than client, which is the default)
-where it's listening on port 8899, but nothing I've sent it has had any
-effect.  I assume it's possible to get at more data that way -- please let
-me know if you have any idea.
+or so.
+
+Thanks to https://github.com/Woutrrr/Omnik-Data-Logger/ I've managed to get
+data out of it on demand.  There's a bizarre 16-byte string you need to send
+the logger each time you want data out of it, and in response it spits out
+the current state and a string to say it's done it.
 
 
 Building
 --------
 
-```gcc inverter.c```
+```make```
 
-There's no Makefile.
+There's now a Makefile.
 
 
 Usage
 -----
 
-```$ ./a.out```
+```$ ./inverter```
 
 
 (More usefully:
 
-```$ nc -l -u -p 10006 | a.out```
+```$ socat TCP4-LISTEN:10006,fork STDOUT | ./inverter | tee -a powerlog | ./log.pl```
 
 as it reads from stdin.)
 
@@ -97,6 +99,24 @@ Total:            6.0 kWh
 
 newdesktop:/home/dickon/src/inverter/ (0) 127 $ 
 ```
+
+There's a new mode, where it'll poll for data.  It's a bit buggy at present.
+Firstly, configure your inverter: login, and under 'Advanced', ensure
+'Working mode' is set to 'Data collection'.  Under 'Port setting', set the
+'Internal server parameters' to Client, TCP, and the port number and IP
+address you wish to use.  On your designated server, run:
+
+```$ while :; do ./inverter $serial -l 0.0.0.0 $port 1 ; sleep 1; done | tee -a newpowerlog | ./log.pl```
+
+(where $serial is the datalogger's serial number -- needed as part of the
+command string -- and $port is the port number you set above).  ./log.pl
+assumes you have created an RRD database as described its comments.  The tee
+isn't necessary, but it makes replaying all the values trivial, should you
+decide you don't need a 65GB RRD after all.  You may want to trim that
+periodically if you do use it.  The while loop is to catch it dropping
+connections.
+
+
 
 Internals
 ---------
