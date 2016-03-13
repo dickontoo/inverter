@@ -17,6 +17,7 @@
 #include <netdb.h>
 #include <errno.h>
 #include <netinet/tcp.h>
+#include <sys/time.h>
 
 void usage(char *name)
 {
@@ -38,6 +39,7 @@ int dosocket(int argc, char *argv[], uint8_t *dlmagic,
 	int flag = 1;
 	int listening = 0;
 	struct addrinfo hints;
+	struct timeval timeout;
 
 	memset(&hints, 0, sizeof(struct addrinfo));
 	hints.ai_family = AF_INET;     /* Allow IPv4 or IPv6 */
@@ -82,6 +84,15 @@ int dosocket(int argc, char *argv[], uint8_t *dlmagic,
 	}
 	setsockopt(fd, IPPROTO_TCP, TCP_NODELAY,
 			(char *) &flag, sizeof(int));
+	setsockopt(fd, SOL_SOCKET, SO_REUSEADDR,
+			(char *) &flag, sizeof(int));
+	setsockopt(fd, SOL_SOCKET, SO_KEEPALIVE,
+			(char *) &flag, sizeof(int));
+	memset(&timeout, 0, sizeof(timeout));
+	timeout.tv_sec = 10;
+	setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, (char *) &timeout, sizeof(timeout));
+	setsockopt(fd, SOL_SOCKET, SO_SNDTIMEO, (char *) &timeout, sizeof(timeout));
+
 	if (listening) {
 		if (bind(fd, a->ai_addr, a->ai_addrlen) == -1) {
 			perror("bind");
@@ -141,7 +152,9 @@ int main(int argc, char *argv[])
 		if (l != 103)
 			continue;
 		if (l == -1 && lfd != -1) {
-			fd = accept(lfd, NULL, NULL);
+			close(fd);
+			while (fd == -1)
+				fd = accept(lfd, NULL, NULL);
 			continue;
 		}
 
